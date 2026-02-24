@@ -674,13 +674,16 @@ function onPhaseChange(room){
     updateBanner('MALAM','night','Werewolf bergerak dalam gelap...',remSec);
     startTimer(remSec,totSec);
 
-    if(state.myRole==='detective'&&room.detectiveResult&&room.detectiveResult.forId===state.playerId){
-      state.detectiveResult=room.detectiveResult;
-    } else { state.detectiveResult=null; }
+    if(!(state.myRole==='detective' && state.detectiveResult)){
+     state.detectiveResult = null;
+   }
 
   } else if(room.phase==='DAY'){
     showOverlay('Fajar Tiba','Desa terbangun...',2000);
     updateBanner('SIANG','day','Diskusikan siapa werewolf!',remSec);
+    if(state.myRole==='detective' && room.detectiveResult && room.detectiveResult.forId===state.playerId){
+     state.detectiveResult = room.detectiveResult;
+   }
     startTimer(remSec,totSec);
 
     if(room.lastKilled&&room.lastKilled.id){
@@ -948,8 +951,20 @@ function renderActionPanel(){
   if(state.phase==='WAITING'){ content.innerHTML='<div class="action-info">Game akan segera dimulai...</div>'; return; }
   if(!me||!me.isAlive){ content.innerHTML='<div class="action-info" style="color:var(--text-dim)">Kamu sudah mati. Saksikan saja.</div>'; return; }
   if(state.phase==='NIGHT')  renderNightActions(content);
-  else if(state.phase==='DAY')    content.innerHTML='<div class="action-info">Diskusikan siapa yang mencurigakan. Voting dimulai setelah siang berakhir.</div>';
+  else if(state.phase==='DAY')    renderDayActions(content);
   else if(state.phase==='VOTING') renderVotingActions(content);
+}
+
+function renderDayActions(content){
+  let h='<div class="action-info">Diskusikan siapa yang mencurigakan. Voting dimulai setelah siang berakhir.</div>';
+  // Tampilkan hasil detektif jika ada
+  if(state.myRole==='detective' && state.detectiveResult){
+    const r=state.detectiveResult;
+    h+='<div class="detective-result '+(r.isWolf?'is-wolf':'not-wolf')+'" style="margin-top:10px">'
+      +'<strong>Hasil Penyelidikan:</strong> <strong>'+esc(r.targetName)+'</strong> adalah '
+      +(r.isWolf?'<strong>WEREWOLF!</strong>':'<strong>bukan werewolf.</strong>')+'</div>';
+  }
+  content.innerHTML=h;
 }
 
 function renderNightActions(content){
